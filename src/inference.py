@@ -1,8 +1,3 @@
-"""Load a trained pipeline and classify REST API request records.
-
-Run from the repository root with ``python -m src.inference --help``.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -22,7 +17,9 @@ from src.preprocessing import (
     preprocess_data,
 )
 
-DEFAULT_MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "decision_tree.pkl"
+DEFAULT_MODEL_PATH = (
+    Path(__file__).resolve().parents[1] / "models" / "decision_tree.pkl"
+)
 
 
 def load_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> Pipeline:
@@ -99,7 +96,9 @@ def predict_records(
     probabilities = probability_predictor(features)
     classes = list(classes)
     if len(predictions) != len(records) or len(probabilities) != len(records):
-        raise ValueError("The model returned a different number of results than inputs.")
+        raise ValueError(
+            "The model returned a different number of results than inputs."
+        )
 
     results: list[dict[str, Any]] = []
     for prediction, row_probabilities in zip(predictions, probabilities, strict=True):

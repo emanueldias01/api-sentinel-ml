@@ -13,7 +13,7 @@ The training process loads `data/dataset_1_train.json`, applies the feature engi
 To save the trained pipeline (preprocessing + model), specify an output path:
 
 ```bash
-uv run python -m src.train --model-output models/decision_tree.joblib
+uv run python -m src.train --model-output models/decision_tree.pkl
 ```
 
 ## Traffic Classification
@@ -26,7 +26,7 @@ Missing input fields are treated as absent, and the label field, if provided, is
 uv run python -m src.inference --input request.json
 
 uv run python -m src.inference \
-  --model models/decision_tree.joblib \
+  --model models/decision_tree.pkl \
   --input requests.json \
   --output predictions.json
 ```
@@ -36,3 +36,31 @@ Each result contains the predicted label (`prediction`), its confidence score (`
 By default, the module looks for `models/decision_tree.pkl`.
 
 Serialized models loaded with joblib can execute Python code. Only use trusted artifacts that are compatible with the dependency versions used during training.
+
+## Prediction API
+
+Start the HTTP API from the repository root:
+
+```bash
+uv run uvicorn src.api:app --host 0.0.0.0 --port 8000
+```
+
+By default, the API loads `models/decision_tree.pkl` once at startup. Set
+`API_MODEL_PATH` to use another trained pipeline. If the model cannot be loaded,
+the application fails to start rather than serving unsuccessful predictions.
+
+`POST /predict` accepts one nested request record. `POST /predict/batch`
+accepts a JSON array of 1 to 100 records. Both return the predicted attack type,
+its confidence score, and the probabilities per class. Interactive API
+documentation is available at `/docs`; `/health` is a liveness probe and
+`/ready` reports whether the model has loaded.
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"request":{"method":"GET","url":"/"}}'
+```
+
+For production deployment, run behind a TLS-terminating reverse proxy and
+configure authentication, request-size limits, and rate limiting at the
+gateway. Each Uvicorn worker loads its own copy of the model.

@@ -1,5 +1,3 @@
-"""Dataset loading, feature engineering, and preprocessing pipelines."""
-
 from __future__ import annotations
 
 import json
@@ -18,7 +16,9 @@ TEST_SIZE = 0.20
 TARGET_COLUMN = "request.Attack_Tag"
 NORMAL_LABEL = "Normal Traffic"
 LOG4J_LABEL = "LOG4J"
-DEFAULT_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "dataset_1_train.json"
+DEFAULT_DATA_PATH = (
+    Path(__file__).resolve().parents[1] / "data" / "dataset_1_train.json"
+)
 
 BASE_CATEGORICAL_FEATURES = (
     "request.method",
@@ -108,7 +108,9 @@ def _validate_columns(data: pd.DataFrame, *, require_target: bool = True) -> Non
     )
     missing_columns = required_columns.difference(data.columns)
     if missing_columns:
-        raise ValueError(f"The dataset is missing required columns: {sorted(missing_columns)}")
+        raise ValueError(
+            f"The dataset is missing required columns: {sorted(missing_columns)}"
+        )
 
 
 def preprocess_data(
@@ -170,10 +172,7 @@ def preprocess_data(
         features["request.headers.Content-Length"].notna().astype("int8")
     )
     features["sec_fetch_site_none"] = (
-        features["request.headers.Sec-Fetch-Site"]
-        .fillna("")
-        .eq("none")
-        .astype("int8")
+        features["request.headers.Sec-Fetch-Site"].fillna("").eq("none").astype("int8")
     )
     features["response.headers.Content-Length"] = pd.to_numeric(
         features["response.headers.Content-Length"],
@@ -192,17 +191,19 @@ def preprocess_data(
     features["has_jndi_anywhere"] = jndi_coverage.astype("int8")
 
     url = features["request.url"].fillna("").astype("string")
-    features["url_has_traversal"] = (
-        url.str.contains(r"\.\./", regex=True, na=False).astype("int8")
-    )
-    features["url_has_newline_encoded"] = (
-        url.str.contains(r"%0a|%0d", case=False, regex=True, na=False).astype("int8")
-    )
+    features["url_has_traversal"] = url.str.contains(
+        r"\.\./", regex=True, na=False
+    ).astype("int8")
+    features["url_has_newline_encoded"] = url.str.contains(
+        r"%0a|%0d", case=False, regex=True, na=False
+    ).astype("int8")
 
     return features
 
 
-def get_feature_columns(additional_features: tuple[str, ...] = ENGINEERED_FEATURES) -> list[str]:
+def get_feature_columns(
+    additional_features: tuple[str, ...] = ENGINEERED_FEATURES,
+) -> list[str]:
     """Return baseline columns plus the requested engineered features."""
     return [
         *BASE_CATEGORICAL_FEATURES,
@@ -222,9 +223,7 @@ def build_preprocessor(
             ("one_hot_encoder", OneHotEncoder(handle_unknown="ignore")),
         ]
     )
-    numeric_pipeline = Pipeline(
-        steps=[("imputer", SimpleImputer(strategy="median"))]
-    )
+    numeric_pipeline = Pipeline(steps=[("imputer", SimpleImputer(strategy="median"))])
     return ColumnTransformer(
         transformers=[
             ("categorical", categorical_pipeline, list(categorical_features)),

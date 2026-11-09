@@ -44,15 +44,9 @@ DECISION_TREE_PARAM_GRID = {
 
 SCORING = {
     "accuracy": "accuracy",
-    "precision_macro": make_scorer(
-        precision_score, average="macro", zero_division=0
-    ),
-    "recall_macro": make_scorer(
-        recall_score, average="macro", zero_division=0
-    ),
-    "f1_macro": make_scorer(
-        f1_score, average="macro", zero_division=0
-    ),
+    "precision_macro": make_scorer(precision_score, average="macro", zero_division=0),
+    "recall_macro": make_scorer(recall_score, average="macro", zero_division=0),
+    "f1_macro": make_scorer(f1_score, average="macro", zero_division=0),
     "log4j_recall": make_scorer(
         recall_score,
         labels=[LOG4J_LABEL],
