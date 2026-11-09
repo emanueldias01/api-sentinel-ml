@@ -1,0 +1,57 @@
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    image: api-sentinel-ml:local
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+    environment:
+      API_MODEL_PATH: /models/decision_tree.pkl
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - model_artifacts:/models:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  trainer:
+    build:
+      context: .
+      target: runtime
+    image: api-sentinel-ml:local
+    command:
+      - python
+      - -m
+      - src.train
+      - --data
+      - /app/data/dataset_1_train.json
+      - --model-output
+      - /models/decision_tree.pkl
+    volumes:
+      - model_artifacts:/models
+    init: true
+
+volumes:
+  model_artifacts:
+    name: api-sentinel-ml-models

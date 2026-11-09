@@ -31,6 +31,12 @@ async def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
+@app.get("/ready", response_model=HealthResponse, tags=["health"])
+async def ready() -> HealthResponse:
+    """Readiness probe; the model is validated during application startup."""
+    return HealthResponse(status="ready")
+
+
 @app.post(
     "/predict",
     response_model=PredictionResponse,

@@ -39,6 +39,30 @@ Serialized models loaded with joblib can execute Python code. Only use trusted a
 
 ## Prediction API
 
+### Docker Compose
+
+The `trainer` job runs before the API, trains the model from the dataset, and
+persists the resulting pipeline in the `api-sentinel-ml-models` named volume.
+The API starts only after training succeeds and mounts the model read-only.
+
+Build, train, and start the API:
+
+```bash
+docker compose up -d --build
+```
+
+Check readiness:
+
+```bash
+docker compose up -d api
+curl http://localhost:8000/ready
+```
+
+The trainer runs again when the Compose application is recreated, which makes
+the model artifact reflect the current dataset and code. The named volume keeps
+the artifact across container recreation. To remove the trained artifact as
+well, use `docker compose down -v`.
+
 Start the HTTP API from the repository root:
 
 ```bash

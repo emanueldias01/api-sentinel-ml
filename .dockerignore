@@ -1,0 +1,12 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+.ruff_cache
+notebooks
+models/*.pkl
+Dockerfile*
+compose*.yml
+docker-compose*.yml
+README.md
