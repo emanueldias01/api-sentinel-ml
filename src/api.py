@@ -7,7 +7,12 @@ from typing import Annotated, Any
 from fastapi import Body, FastAPI
 
 from src.inference import DEFAULT_MODEL_PATH, load_model, predict_records
-from src.schemas import *
+from src.schemas import (
+    BatchPredictionResponse,
+    HealthResponse,
+    PredictRequest,
+    PredictionResponse,
+)
 
 MAX_BATCH_SIZE = 100
 MODEL_PATH = Path(os.environ.get("API_MODEL_PATH", DEFAULT_MODEL_PATH))
@@ -31,9 +36,9 @@ async def health() -> HealthResponse:
     response_model=PredictionResponse,
     tags=["predictions"],
 )
-async def predict(record: dict[str, Any]) -> dict[str, Any]:
+async def predict(record: PredictRequest) -> dict[str, Any]:
     """Classify one nested REST request record."""
-    results = predict_records([record], model)
+    results = predict_records([record.model_dump(exclude_none=True)], model)
     return results[0]
 
 
@@ -44,10 +49,13 @@ async def predict(record: dict[str, Any]) -> dict[str, Any]:
 )
 async def predict_batch(
     records: Annotated[
-        list[dict[str, Any]],
+        list[PredictRequest],
         Body(min_length=1, max_length=MAX_BATCH_SIZE),
     ],
 ) -> BatchPredictionResponse:
     """Classify 1 to 100 nested REST request records in one call."""
-    results = predict_records(records, model)
+    results = predict_records(
+        [record.model_dump(exclude_none=True) for record in records],
+        model,
+    )
     return BatchPredictionResponse(predictions=results)
