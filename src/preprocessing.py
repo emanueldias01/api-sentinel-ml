@@ -100,21 +100,34 @@ def load_dataset(path: str | Path = DEFAULT_DATA_PATH) -> pd.DataFrame:
     return pd.json_normalize(records, max_level=2)
 
 
-def _validate_columns(data: pd.DataFrame) -> None:
-    missing_columns = REQUIRED_COLUMNS.difference(data.columns)
+def _validate_columns(data: pd.DataFrame, *, require_target: bool = True) -> None:
+    required_columns = (
+        REQUIRED_COLUMNS
+        if require_target
+        else REQUIRED_COLUMNS.difference({TARGET_COLUMN})
+    )
+    missing_columns = required_columns.difference(data.columns)
     if missing_columns:
         raise ValueError(f"The dataset is missing required columns: {sorted(missing_columns)}")
 
 
-def preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
+def preprocess_data(
+    data: pd.DataFrame,
+    *,
+    require_target: bool = True,
+) -> pd.DataFrame:
     """Normalize labels and add the notebook's request/response indicators.
 
     The input is expected to be flattened by :func:`load_dataset` or
     ``pandas.json_normalize``. A copy is returned; the caller's frame is unchanged.
+    Set ``require_target=False`` for unlabeled inference records.
     """
-    _validate_columns(data)
+    _validate_columns(data, require_target=require_target)
     features = data.copy()
-    features[TARGET_COLUMN] = features[TARGET_COLUMN].fillna(NORMAL_LABEL).astype(str)
+    if TARGET_COLUMN in features:
+        features[TARGET_COLUMN] = (
+            features[TARGET_COLUMN].fillna(NORMAL_LABEL).astype(str)
+        )
 
     request_columns = [
         column
