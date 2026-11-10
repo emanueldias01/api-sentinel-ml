@@ -1,5 +1,9 @@
 # api-sentinel-ml
 
+## Dataset
+
+The dataset used by this project was obtained from the [Cisco Ariel Uni API Security Challenge repository](https://github.com/ArielCyber/Cisco_Ariel_Uni_API_security_challenge).
+
 ## Model Training
 
 Once the project environment is set up, run the following command from the repository root:
