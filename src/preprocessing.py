@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -39,7 +40,42 @@ JNDI_FEATURES = (
     "has_jndi_anywhere",
 )
 URL_FEATURES = ("url_has_traversal", "url_has_newline_encoded")
-ENGINEERED_FEATURES = TEMPLATE_FEATURES + JNDI_FEATURES + URL_FEATURES
+URL_BODY_FEATURES = ("url_body_has_sql", "url_body_has_rce")
+ENGINEERED_FEATURES = (
+    TEMPLATE_FEATURES + JNDI_FEATURES + URL_FEATURES + URL_BODY_FEATURES
+)
+
+SQL_INDICATORS = (
+    "select",
+    "union",
+    "from",
+    "or ",
+    "limit",
+    "--",
+    "/*",
+    "*/",
+    "concat",
+    "char",
+    "substr",
+    "order by",
+    "username",
+    "password",
+    "'",
+    '"',
+    ";",
+)
+RCE_INDICATORS = (
+    "{{",
+    "}}",
+    "__globals__",
+    "__builtins__",
+    "import os",
+    "subprocess",
+    "script",
+    "alert(",
+    "system(",
+    "exec(",
+)
 
 FEATURE_CONFIGURATIONS = {
     "Baseline": (),
@@ -196,6 +232,18 @@ def preprocess_data(
     ).astype("int8")
     features["url_has_newline_encoded"] = url.str.contains(
         r"%0a|%0d", case=False, regex=True, na=False
+    ).astype("int8")
+
+    url_body = (
+        features["request.url"].fillna("").astype("string")
+        + " "
+        + features["request.body"].fillna("").astype("string")
+    ).map(unquote).str.lower()
+    features["url_body_has_sql"] = url_body.map(
+        lambda value: any(indicator in value for indicator in SQL_INDICATORS)
+    ).astype("int8")
+    features["url_body_has_rce"] = url_body.map(
+        lambda value: any(indicator in value for indicator in RCE_INDICATORS)
     ).astype("int8")
 
     return features

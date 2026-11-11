@@ -13,6 +13,7 @@ uv run python -m src.train
 ```
 
 The training process loads `data/dataset_1_train.json`, applies the feature engineering steps defined in the notebook, and evaluates a decision tree classifier using grid search and stratified cross-validation.
+Preprocessing also derives SQL-injection and RCE indicators from URL-decoded request URLs and bodies. Inference uses the feature columns recorded by the loaded pipeline, so it supports both existing models and request-only pipelines that omit response attributes.
 
 To save the trained pipeline (preprocessing + model), specify an output path:
 

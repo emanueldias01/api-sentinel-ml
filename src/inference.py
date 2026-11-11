@@ -90,7 +90,17 @@ def predict_records(
             data[column] = None
 
     processed = preprocess_data(data, require_target=False)
-    features = processed.loc[:, get_feature_columns()]
+    model_features = getattr(model, "feature_names_in_", None)
+    feature_columns = (
+        list(model_features) if model_features is not None else get_feature_columns()
+    )
+    missing_features = set(feature_columns).difference(processed.columns)
+    if missing_features:
+        raise ValueError(
+            "The model requires feature columns that preprocessing did not produce: "
+            f"{sorted(missing_features)}"
+        )
+    features = processed.loc[:, feature_columns]
 
     predictions = model.predict(features)
     probabilities = probability_predictor(features)
